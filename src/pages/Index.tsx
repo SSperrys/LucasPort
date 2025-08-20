@@ -1,4 +1,4 @@
-import { FloatingTriangles } from '@/components/FloatingTriangles';
+import { FloatingGears } from '@/components/FloatingGears';
 import { Navigation } from '@/components/Navigation';
 import { HeroSection } from '@/components/HeroSection';
 import { ExperienceSection } from '@/components/ExperienceSection';
@@ -7,8 +7,8 @@ import { ProjectsSection } from '@/components/ProjectsSection';
 const Index = () => {
   return (
     <div className="relative">
-      {/* Floating triangles background */}
-      <FloatingTriangles />
+      {/* Floating gears background */}
+      <FloatingGears />
       
       {/* Navigation */}
       <Navigation />
