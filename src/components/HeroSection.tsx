@@ -16,16 +16,16 @@ export const HeroSection = () => {
         </p>
         
         <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-foreground mb-8 font-hero leading-tight">
-          Albert Sun.
+          Lucas Cho.
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl leading-relaxed">
-          I'm a computer science student at{' '}
-          <span className="text-foreground font-semibold">UT Austin</span>{' '}
+          I am a mechanical engineer studying at{' '}
+          <span className="text-foreground font-semibold">CMA</span>{' '}
           who is interested in{' '}
-          <span className="text-triangle-blue font-semibold">data engineering</span>,{' '}
-          <span className="text-triangle-green font-semibold">human centered computing</span>, and{' '}
-          <span className="text-triangle-red font-semibold">physical simulation</span>.
+          <span className="text-triangle-blue font-semibold">robotics</span>{' '}
+          and{' '}
+          <span className="text-triangle-green font-semibold">energy</span>.
         </p>
 
         {/* Social Links */}

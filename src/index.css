@@ -8,40 +8,40 @@
   :root {
     /* Dark portfolio theme */
     --background: 217 19% 12%;
-    --foreground: 210 20% 95%;
+    --foreground: 45 100% 50%;
 
     --card: 217 19% 15%;
-    --card-foreground: 210 20% 95%;
+    --card-foreground: 45 100% 50%;
 
     --popover: 217 19% 15%;
-    --popover-foreground: 210 20% 95%;
+    --popover-foreground: 45 100% 50%;
 
-    --primary: 210 20% 95%;
+    --primary: 45 100% 50%;
     --primary-foreground: 217 19% 12%;
 
     --secondary: 217 19% 18%;
-    --secondary-foreground: 210 20% 95%;
+    --secondary-foreground: 45 100% 50%;
 
     --muted: 217 19% 18%;
-    --muted-foreground: 215 16% 65%;
+    --muted-foreground: 45 80% 40%;
 
     --accent: 217 19% 18%;
-    --accent-foreground: 210 20% 95%;
+    --accent-foreground: 45 100% 50%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 95%;
+    --destructive-foreground: 45 100% 50%;
 
     --border: 217 19% 20%;
     --input: 217 19% 20%;
-    --ring: 210 20% 95%;
+    --ring: 45 100% 50%;
 
     --radius: 0.5rem;
 
     /* Geometric accent colors */
     --triangle-yellow: 45 100% 65%;
-    --triangle-blue: 210 100% 65%;
+    --triangle-blue: 220 100% 30%;
     --triangle-red: 0 100% 65%;
-    --triangle-green: 120 100% 65%;
+    --triangle-green: 220 100% 30%;
     --triangle-purple: 270 100% 65%;
 
     /* Typography */
