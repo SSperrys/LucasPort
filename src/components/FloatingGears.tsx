@@ -56,6 +56,7 @@ export const FloatingGears = ({ onGearPlaced }: FloatingGearsProps) => {
 
   const handleMouseDown = (e: React.MouseEvent, gearId: number) => {
     e.preventDefault();
+    e.stopPropagation();
     const gear = gears.find(g => g.id === gearId);
     if (!gear) return;
 
@@ -69,24 +70,34 @@ export const FloatingGears = ({ onGearPlaced }: FloatingGearsProps) => {
         ? { ...g, isDragging: true, dragOffset: { x: offsetX, y: offsetY } }
         : g
     ));
+
+    // Set cursor globally
+    document.body.style.cursor = 'grabbing';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (draggedGear === null) return;
 
     const containerRect = e.currentTarget.getBoundingClientRect();
-    const newX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-    const newY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+    const gear = gears.find(g => g.id === draggedGear);
+    if (!gear) return;
+
+    // Calculate position accounting for drag offset
+    const newX = ((e.clientX - containerRect.left - gear.dragOffset.x) / containerRect.width) * 100;
+    const newY = ((e.clientY - containerRect.top - gear.dragOffset.y) / containerRect.height) * 100;
 
     setGears(prev => prev.map(g => 
       g.id === draggedGear 
-        ? { ...g, x: Math.max(0, Math.min(100, newX)), y: Math.max(0, Math.min(100, newY)) }
+        ? { ...g, x: Math.max(-5, Math.min(105, newX)), y: Math.max(-5, Math.min(105, newY)) }
         : g
     ));
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (draggedGear !== null) {
+      // Reset cursor
+      document.body.style.cursor = '';
+      
       // Check if we're over a gear slot
       const slotElements = document.querySelectorAll('.gear-slot');
       let droppedOnSlot = false;
@@ -213,25 +224,26 @@ export const FloatingGears = ({ onGearPlaced }: FloatingGearsProps) => {
       {gears.map((gear) => (
         <div
           key={gear.id}
-          className={`absolute gear-float opacity-70 transition-transform duration-200 ${
-            gear.isDragging ? 'gear-dragging pointer-events-auto' : ''
+          className={`absolute opacity-70 transition-all duration-200 will-change-transform ${
+            gear.isDragging 
+              ? 'gear-dragging pointer-events-auto' 
+              : 'gear-float gear-idle pointer-events-auto'
           }`}
           style={{
             left: `${gear.x}%`,
             top: `${gear.y}%`,
             animationDelay: gear.isDragging ? '0s' : `${gear.animationDelay}s`,
             animationPlayState: gear.isDragging ? 'paused' : 'running',
-            transform: `translate(-50%, -50%) rotate(${gear.rotation}deg) ${gear.isDragging ? 'scale(1.1)' : ''}`,
-            cursor: gear.isDragging ? 'grabbing' : 'grab'
+            transform: `translate(-50%, -50%) ${gear.isDragging ? '' : `rotate(${gear.rotation}deg)`}`,
           }}
           onMouseDown={(e) => handleMouseDown(e, gear.id)}
         >
           <div 
-            className="pointer-events-auto"
+            className="select-none"
             style={{ 
               width: gear.size, 
               height: gear.size,
-              pointerEvents: gear.isDragging ? 'none' : 'auto'
+              pointerEvents: 'auto'
             }}
             data-gear-type={gear.type}
             data-gear-id={gear.id}

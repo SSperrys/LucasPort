@@ -137,6 +137,7 @@ export const ProjectsSection = () => {
   const renderTargetGear = (project: Project, isPlaced: boolean) => {
     const baseSize = 80;
     const animationClass = isPlaced ? 'gear-spin-clockwise' : '';
+    const placedGearClass = isPlaced ? 'gear-mesh-animation gear-spin-counterclockwise' : '';
     
     switch (project.gearType) {
       case 'spur':
@@ -163,7 +164,7 @@ export const ProjectsSection = () => {
                 width={baseSize} 
                 height={baseSize} 
                 viewBox="0 0 100 100" 
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} gear-spin-counterclockwise`}
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedGearClass}`}
               >
                 <circle cx="50" cy="50" r="20" fill="currentColor" />
                 {Array.from({ length: 12 }).map((_, i) => (
@@ -206,7 +207,7 @@ export const ProjectsSection = () => {
                 width={baseSize} 
                 height={baseSize} 
                 viewBox="0 0 100 100" 
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} gear-spin-counterclockwise opacity-80`}
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedGearClass} opacity-80`}
               >
                 <circle cx="50" cy="50" r="25" fill="currentColor" />
                 <circle cx="50" cy="50" r="15" fill="hsl(var(--background))" />
@@ -249,7 +250,7 @@ export const ProjectsSection = () => {
                 width={baseSize} 
                 height={baseSize} 
                 viewBox="0 0 100 100" 
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} gear-spin-clockwise`}
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedGearClass}`}
               >
                 <ellipse cx="50" cy="50" rx="30" ry="15" fill="currentColor" />
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -300,17 +301,17 @@ export const ProjectsSection = () => {
         </h2>
         
         <p className="text-xl text-muted-foreground text-center mb-16 max-w-3xl mx-auto">
-          Drag the floating gears to their matching slots to explore each project. 
-          Each gear combination demonstrates different mechanical principles.
+          Drag the floating gears to their matching project slots to explore each project. 
+          Watch as the gears mesh together and spin in perfect synchronization.
         </p>
         
         <div className="flex flex-wrap justify-center gap-12 lg:gap-16">
           {projectStates.map((project, index) => (
             <div 
               key={index} 
-              className={`gear-slot flex flex-col items-center p-8 rounded-xl transition-all duration-300 min-w-[280px] ${
+              className={`gear-slot flex flex-col items-center p-8 rounded-xl transition-all duration-500 min-w-[280px] bg-card/30 backdrop-blur-sm ${
                 dragOverSlot === index ? 'drag-over' : ''
-              } ${project.placed ? 'bg-primary/10' : ''}`}
+              } ${project.placed ? 'bg-primary/20 shadow-lg' : 'hover:bg-card/50'}`}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
@@ -328,16 +329,13 @@ export const ProjectsSection = () => {
                 {renderTargetGear(project, project.placed)}
               </div>
               
-              <div className="text-center">
-                <span className="text-sm text-muted-foreground">
-                  Drop {project.gearType} gear here
-                </span>
-                {project.placed && (
-                  <div className="mt-2 text-primary text-sm font-semibold">
-                    Opening project...
+              {project.placed && (
+                <div className="text-center mt-4">
+                  <div className="text-primary text-sm font-semibold animate-pulse">
+                    Gears meshing... Opening project
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

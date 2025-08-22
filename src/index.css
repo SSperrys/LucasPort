@@ -76,33 +76,46 @@
 
   /* Gear floating animation */
   .gear-float {
-    animation: gearFloat 8s ease-in-out infinite;
+    animation: gearFloat 12s ease-in-out infinite, idleRotate 20s linear infinite;
   }
 
   .gear-float:nth-child(2n) {
-    animation-delay: -2s;
+    animation-delay: -3s;
   }
 
   .gear-float:nth-child(3n) {
-    animation-delay: -4s;
+    animation-delay: -6s;
   }
 
   @keyframes gearFloat {
     0%, 100% {
-      transform: translateY(0px) rotate(0deg);
+      transform: translateY(0px);
     }
     50% {
-      transform: translateY(-15px) rotate(180deg);
+      transform: translateY(-20px);
     }
+  }
+
+  @keyframes idleRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   /* Gear spinning animations */
+  .gear-spin-fast {
+    animation: spinClockwise 2s linear infinite;
+  }
+
   .gear-spin-clockwise {
-    animation: spinClockwise 3s linear infinite;
+    animation: spinClockwise 4s linear infinite;
   }
 
   .gear-spin-counterclockwise {
-    animation: spinCounterClockwise 3s linear infinite;
+    animation: spinCounterClockwise 4s linear infinite;
+  }
+
+  .gear-mesh-animation {
+    animation: meshGear 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
   }
 
   @keyframes spinClockwise {
@@ -115,21 +128,61 @@
     to { transform: rotate(0deg); }
   }
 
+  @keyframes meshGear {
+    0% { 
+      transform: scale(1.2) rotate(0deg);
+      opacity: 0.8;
+    }
+    50% { 
+      transform: scale(1.05) rotate(45deg);
+      opacity: 0.9;
+    }
+    100% { 
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
   /* Drag and drop styles */
   .gear-dragging {
     z-index: 1000;
     transform: scale(1.1);
-    cursor: grabbing;
+    cursor: grabbing !important;
+    filter: brightness(1.2);
+    transition: transform 0.1s ease-out;
+  }
+
+  .gear-idle {
+    cursor: grab;
+    transition: transform 0.2s ease;
+  }
+
+  .gear-idle:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
   }
 
   .gear-slot {
-    border: 2px dashed rgba(255, 255, 255, 0.3);
     transition: all 0.3s ease;
+    position: relative;
   }
 
   .gear-slot.drag-over {
-    border-color: hsl(var(--primary));
-    background-color: hsl(var(--primary) / 0.1);
+    transform: scale(1.02);
+  }
+
+  .gear-slot.drag-over::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: hsl(var(--primary) / 0.1);
+    border-radius: inherit;
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.3; }
   }
 
   /* Scroll indicator */
