@@ -74,48 +74,55 @@
     font-family: var(--font-body);
   }
 
-  /* Gear floating animation */
+  /* Smooth gear floating animation */
   .gear-float {
-    animation: gearFloat 12s ease-in-out infinite, idleRotate 20s linear infinite;
+    animation: gentleFloat 15s ease-in-out infinite, slowRotate 30s linear infinite;
+    will-change: transform;
   }
 
   .gear-float:nth-child(2n) {
-    animation-delay: -3s;
+    animation-delay: -5s;
   }
 
   .gear-float:nth-child(3n) {
-    animation-delay: -6s;
+    animation-delay: -10s;
   }
 
-  @keyframes gearFloat {
+  .gear-float:nth-child(4n) {
+    animation-delay: -15s;
+  }
+
+  @keyframes gentleFloat {
     0%, 100% {
-      transform: translateY(0px);
+      transform: translate3d(0, 0, 0);
+    }
+    25% {
+      transform: translate3d(10px, -15px, 0);
     }
     50% {
-      transform: translateY(-20px);
+      transform: translate3d(-5px, -25px, 0);
+    }
+    75% {
+      transform: translate3d(-10px, -10px, 0);
     }
   }
 
-  @keyframes idleRotate {
+  @keyframes slowRotate {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
 
-  /* Gear spinning animations */
-  .gear-spin-fast {
-    animation: spinClockwise 2s linear infinite;
-  }
-
+  /* Gear spinning animations - synchronized speeds */
   .gear-spin-clockwise {
-    animation: spinClockwise 4s linear infinite;
+    animation: spinClockwise 6s linear infinite;
   }
 
   .gear-spin-counterclockwise {
-    animation: spinCounterClockwise 4s linear infinite;
+    animation: spinCounterClockwise 6s linear infinite;
   }
 
-  .gear-mesh-animation {
-    animation: meshGear 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+  .gear-mesh-in {
+    animation: meshIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
 
   @keyframes spinClockwise {
@@ -124,18 +131,22 @@
   }
 
   @keyframes spinCounterClockwise {
-    from { transform: rotate(360deg); }
-    to { transform: rotate(0deg); }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
   }
 
-  @keyframes meshGear {
+  @keyframes meshIn {
     0% { 
-      transform: scale(1.2) rotate(0deg);
-      opacity: 0.8;
+      transform: scale(1.3) rotate(0deg);
+      opacity: 0.7;
     }
-    50% { 
-      transform: scale(1.05) rotate(45deg);
-      opacity: 0.9;
+    30% { 
+      transform: scale(1.15) rotate(30deg);
+      opacity: 0.85;
+    }
+    60% { 
+      transform: scale(1.05) rotate(15deg);
+      opacity: 0.95;
     }
     100% { 
       transform: scale(1) rotate(0deg);
@@ -143,41 +154,35 @@
     }
   }
 
-  /* Drag and drop styles */
+  /* Smooth drag and drop styles */
   .gear-dragging {
     z-index: 1000;
-    transform: scale(1.1);
     cursor: grabbing !important;
-    filter: brightness(1.2);
-    transition: transform 0.1s ease-out;
+    transform: scale(1.15) translate3d(0, 0, 0);
+    filter: brightness(1.3) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    transition: none;
+    will-change: transform;
   }
 
   .gear-idle {
     cursor: grab;
-    transition: transform 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
   }
 
   .gear-idle:hover {
-    transform: scale(1.05);
-    filter: brightness(1.1);
+    transform: scale(1.08) translate3d(0, -2px, 0);
+    filter: brightness(1.15);
   }
 
+  /* Invisible slot styles */
   .gear-slot {
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease;
     position: relative;
   }
 
-  .gear-slot.drag-over {
+  .gear-slot.snap-ready {
     transform: scale(1.02);
-  }
-
-  .gear-slot.drag-over::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: hsl(var(--primary) / 0.1);
-    border-radius: inherit;
-    animation: pulse 1s ease-in-out infinite;
   }
 
   @keyframes pulse {

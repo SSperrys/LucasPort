@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { useState, useCallback } from 'react';
 
 interface Project {
   title: string;
@@ -7,7 +6,8 @@ interface Project {
   gearType: 'spur' | 'bevel' | 'internal' | 'worm';
   targetGearColor: string;
   link: string;
-  placed: boolean;
+  isActive: boolean;
+  hasPlacedGear: boolean;
 }
 
 const projects: Project[] = [
@@ -17,7 +17,8 @@ const projects: Project[] = [
     gearType: 'spur',
     targetGearColor: 'gear-emerald',
     link: 'https://example.com/robotics',
-    placed: false
+    isActive: false,
+    hasPlacedGear: false
   },
   {
     title: 'Precision Machining',
@@ -25,7 +26,8 @@ const projects: Project[] = [
     gearType: 'bevel',
     targetGearColor: 'gear-grey',
     link: 'https://example.com/machining',
-    placed: false
+    isActive: false,
+    hasPlacedGear: false
   },
   {
     title: 'Energy Transmission',
@@ -33,7 +35,8 @@ const projects: Project[] = [
     gearType: 'internal',
     targetGearColor: 'gear-crimson',
     link: 'https://example.com/energy',
-    placed: false
+    isActive: false,
+    hasPlacedGear: false
   },
   {
     title: 'Mechanical Drives',
@@ -41,297 +44,309 @@ const projects: Project[] = [
     gearType: 'worm',
     targetGearColor: 'gear-sky-blue',
     link: 'https://example.com/drives',
-    placed: false
+    isActive: false,
+    hasPlacedGear: false
   }
 ];
 
 export const ProjectsSection = () => {
   const [projectStates, setProjectStates] = useState(projects);
-  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    setDragOverSlot(index);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverSlot(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    setDragOverSlot(null);
+  // Handle gear snapping from FloatingGears
+  const handleGearSnapped = useCallback((gearId: number, gearType: string, slotIndex: number) => {
+    const project = projectStates[slotIndex];
     
-    // This will be handled by mouse events instead since we're using custom drag
-  };
+    if (project && project.gearType === gearType && !project.hasPlacedGear) {
+      // Activate the project with meshing animation
+      setProjectStates(prev => prev.map((p, i) => 
+        i === slotIndex 
+          ? { ...p, isActive: true, hasPlacedGear: true }
+          : p
+      ));
 
-  const handleSlotClick = (e: React.MouseEvent, index: number) => {
-    const project = projectStates[index];
-    if (project.placed) return;
-
-    // Check for dragged gear
-    const draggingGears = document.querySelectorAll('.gear-dragging [data-gear-type]');
-    if (draggingGears.length > 0) {
-      const gearElement = draggingGears[0] as HTMLElement;
-      const gearType = gearElement.getAttribute('data-gear-type');
-      const gearId = gearElement.getAttribute('data-gear-id');
-      
-      if (gearType === project.gearType) {
-        // Correct gear placed!
-        setProjectStates(prev => prev.map((p, i) => 
-          i === index ? { ...p, placed: true } : p
-        ));
-        
-        // Remove the floating gear
-        if (gearId && (window as any).removeFloatingGear) {
-          (window as any).removeFloatingGear(parseInt(gearId));
-        }
-        
-        // After a delay, navigate to the link
-        setTimeout(() => {
-          window.open(project.link, '_blank');
-          // Reset the project state
-          setProjectStates(prev => prev.map((p, i) => 
-            i === index ? { ...p, placed: false } : p
-          ));
-        }, 2000);
-        return;
+      // Remove the floating gear
+      if ((window as any).removeFloatingGear) {
+        (window as any).removeFloatingGear(gearId);
       }
-    }
 
-    // Also check if clicked on gear directly in slot area
-    const rect = e.currentTarget.getBoundingClientRect();
-    const gearElements = document.elementsFromPoint(e.clientX, e.clientY);
-    
-    const gearElement = gearElements.find(el => 
-      el.hasAttribute('data-gear-type')
-    ) as HTMLElement;
-
-    if (gearElement) {
-      const gearType = gearElement.getAttribute('data-gear-type');
-      const gearId = gearElement.getAttribute('data-gear-id');
-      
-      if (gearType === project.gearType) {
-        // Correct gear placed!
-        setProjectStates(prev => prev.map((p, i) => 
-          i === index ? { ...p, placed: true } : p
-        ));
+      // After meshing animation, open link and reset
+      setTimeout(() => {
+        window.open(project.link, '_blank');
         
-        // Remove the floating gear
-        if (gearId && (window as any).removeFloatingGear) {
-          (window as any).removeFloatingGear(parseInt(gearId));
-        }
-        
-        // After a delay, navigate to the link
+        // Reset state after opening
         setTimeout(() => {
-          window.open(project.link, '_blank');
-          // Reset the project state
           setProjectStates(prev => prev.map((p, i) => 
-            i === index ? { ...p, placed: false } : p
+            i === slotIndex 
+              ? { ...p, isActive: false, hasPlacedGear: false }
+              : p
           ));
-        }, 2000);
-      }
+        }, 500);
+      }, 2000);
     }
-  };
+  }, [projectStates]);
 
-  const renderTargetGear = (project: Project, isPlaced: boolean) => {
-    const baseSize = 80;
-    const animationClass = isPlaced ? 'gear-spin-clockwise' : '';
-    const placedGearClass = isPlaced ? 'gear-mesh-animation gear-spin-counterclockwise' : '';
+  // Expose handler for FloatingGears
+  useState(() => {
+    (window as any).onGearSnapped = handleGearSnapped;
+    return () => {
+      delete (window as any).onGearSnapped;
+    };
+  });
+
+  // Render slot gear based on project type
+  const renderSlotGear = (project: Project, index: number) => {
+    const baseSize = 100;
+    const isActive = project.isActive;
+    const hasGear = project.hasPlacedGear;
     
+    const slotAnimation = isActive ? 'gear-spin-clockwise' : '';
+    const placedAnimation = isActive ? 'gear-mesh-in gear-spin-counterclockwise' : '';
+
     switch (project.gearType) {
       case 'spur':
         return (
-          <div className={`relative ${animationClass}`}>
-            {/* Larger background gear */}
-            <svg width={baseSize + 40} height={baseSize + 40} viewBox="0 0 120 120" className={`fill-current text-${project.targetGearColor} opacity-60`}>
-              <circle cx="60" cy="60" r="35" fill="currentColor" />
-              {Array.from({ length: 16 }).map((_, i) => (
+          <div className={`relative ${slotAnimation}`}>
+            {/* Target slot gear - larger background gear */}
+            <svg 
+              width={baseSize + 30} 
+              height={baseSize + 30} 
+              viewBox="0 0 130 130" 
+              className={`fill-current text-${project.targetGearColor} opacity-40`}
+            >
+              <circle cx="65" cy="65" r="40" fill="currentColor" />
+              {Array.from({ length: 20 }).map((_, i) => (
                 <rect
                   key={i}
-                  x="58"
+                  x="63"
                   y="15"
                   width="4"
                   height="20"
                   fill="currentColor"
-                  transform={`rotate(${i * 22.5} 60 60)`}
+                  transform={`rotate(${i * 18} 65 65)`}
                 />
               ))}
+              <circle cx="65" cy="65" r="15" fill="hsl(var(--background))" />
             </svg>
-            {/* Smaller spur gear on top when placed */}
-            {isPlaced && (
+            
+            {/* Placed gear animation */}
+            {hasGear && (
               <svg 
                 width={baseSize} 
                 height={baseSize} 
                 viewBox="0 0 100 100" 
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedGearClass}`}
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedAnimation}`}
               >
-                <circle cx="50" cy="50" r="20" fill="currentColor" />
+                <circle cx="50" cy="50" r="18" fill="currentColor" />
                 {Array.from({ length: 12 }).map((_, i) => (
                   <rect
                     key={i}
-                    x="48"
-                    y="10"
-                    width="4"
-                    height="15"
+                    x="47"
+                    y="8"
+                    width="6"
+                    height="18"
                     fill="currentColor"
                     transform={`rotate(${i * 30} 50 50)`}
                   />
                 ))}
+                <circle cx="50" cy="50" r="8" fill="hsl(var(--background))" />
               </svg>
             )}
           </div>
         );
-      case 'internal':
+
+      case 'bevel':
         return (
-          <div className={`relative ${animationClass}`}>
-            {/* Inner gear (crimson) */}
-            <svg width={baseSize + 20} height={baseSize + 20} viewBox="0 0 110 110" className={`fill-current text-${project.targetGearColor}`}>
-              <circle cx="55" cy="55" r="35" fill="currentColor" />
-              <circle cx="55" cy="55" r="20" fill="hsl(var(--background))" />
-              {Array.from({ length: 20 }).map((_, i) => (
-                <rect
+          <div className={`relative ${slotAnimation}`}>
+            <svg 
+              width={baseSize} 
+              height={baseSize} 
+              viewBox="0 0 100 100" 
+              className={`fill-current text-${project.targetGearColor} opacity-40`}
+            >
+              <circle cx="50" cy="50" r="25" fill="currentColor" />
+              {Array.from({ length: 12 }).map((_, i) => (
+                <polygon
                   key={i}
-                  x="53"
-                  y="20"
-                  width="4"
-                  height="10"
-                  fill="hsl(var(--background))"
-                  transform={`rotate(${i * 18} 55 55)`}
+                  points="50,8 58,28 42,28"
+                  fill="currentColor"
+                  transform={`rotate(${i * 30} 50 50)`}
                 />
               ))}
+              <circle cx="50" cy="50" r="12" fill="hsl(var(--background))" />
             </svg>
-            {/* Outer internal gear when placed */}
-            {isPlaced && (
+            
+            {hasGear && (
               <svg 
-                width={baseSize} 
-                height={baseSize} 
+                width={baseSize - 20} 
+                height={baseSize - 20} 
                 viewBox="0 0 100 100" 
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedGearClass} opacity-80`}
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedAnimation}`}
               >
-                <circle cx="50" cy="50" r="25" fill="currentColor" />
-                <circle cx="50" cy="50" r="15" fill="hsl(var(--background))" />
-                {Array.from({ length: 16 }).map((_, i) => (
+                <circle cx="50" cy="50" r="20" fill="currentColor" />
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <polygon
+                    key={i}
+                    points="50,12 58,28 42,28"
+                    fill="currentColor"
+                    transform={`rotate(${i * 36} 50 50)`}
+                  />
+                ))}
+                <circle cx="50" cy="50" r="10" fill="hsl(var(--background))" />
+              </svg>
+            )}
+          </div>
+        );
+
+      case 'internal':
+        return (
+          <div className={`relative ${slotAnimation}`}>
+            {/* Inner gear for internal system */}
+            <svg 
+              width={baseSize} 
+              height={baseSize} 
+              viewBox="0 0 100 100" 
+              className={`fill-current text-${project.targetGearColor} opacity-40`}
+            >
+              <circle cx="50" cy="50" r="25" fill="currentColor" />
+              {Array.from({ length: 15 }).map((_, i) => (
+                <rect
+                  key={i}
+                  x="48"
+                  y="8"
+                  width="4"
+                  height="15"
+                  fill="currentColor"
+                  transform={`rotate(${i * 24} 50 50)`}
+                />
+              ))}
+              <circle cx="50" cy="50" r="10" fill="hsl(var(--background))" />
+            </svg>
+            
+            {/* Outer internal gear when placed */}
+            {hasGear && (
+              <svg 
+                width={baseSize + 20} 
+                height={baseSize + 20} 
+                viewBox="0 0 120 120" 
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedAnimation} opacity-70`}
+              >
+                <circle cx="60" cy="60" r="35" fill="currentColor" />
+                <circle cx="60" cy="60" r="20" fill="hsl(var(--background))" />
+                {Array.from({ length: 18 }).map((_, i) => (
                   <rect
                     key={i}
-                    x="48"
-                    y="25"
+                    x="58"
+                    y="20"
                     width="4"
-                    height="8"
+                    height="12"
                     fill="hsl(var(--background))"
-                    transform={`rotate(${i * 22.5} 50 50)`}
+                    transform={`rotate(${i * 20} 60 60)`}
                   />
                 ))}
               </svg>
             )}
           </div>
         );
+
       case 'worm':
         return (
-          <div className={`relative ${animationClass}`}>
-            {/* Straight-cut gear */}
-            <svg width={baseSize + 20} height={baseSize + 20} viewBox="0 0 110 110" className={`fill-current text-${project.targetGearColor} opacity-60`}>
-              <circle cx="55" cy="55" r="30" fill="currentColor" />
-              {Array.from({ length: 12 }).map((_, i) => (
+          <div className={`relative ${slotAnimation}`}>
+            {/* Straight-cut gear for worm drive */}
+            <svg 
+              width={baseSize} 
+              height={baseSize} 
+              viewBox="0 0 100 100" 
+              className={`fill-current text-${project.targetGearColor} opacity-40`}
+            >
+              <circle cx="50" cy="50" r="28" fill="currentColor" />
+              {Array.from({ length: 16 }).map((_, i) => (
                 <rect
                   key={i}
-                  x="53"
-                  y="15"
+                  x="48"
+                  y="8"
                   width="4"
-                  height="20"
+                  height="18"
                   fill="currentColor"
-                  transform={`rotate(${i * 30} 55 55)`}
+                  transform={`rotate(${i * 22.5} 50 50)`}
                 />
               ))}
+              <circle cx="50" cy="50" r="12" fill="hsl(var(--background))" />
             </svg>
+            
             {/* Worm gear when placed */}
-            {isPlaced && (
+            {hasGear && (
               <svg 
-                width={baseSize} 
-                height={baseSize} 
-                viewBox="0 0 100 100" 
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedGearClass}`}
+                width={baseSize + 10} 
+                height={baseSize - 20} 
+                viewBox="0 0 110 80" 
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fill-current text-${project.targetGearColor} ${placedAnimation}`}
               >
-                <ellipse cx="50" cy="50" rx="30" ry="15" fill="currentColor" />
-                {Array.from({ length: 6 }).map((_, i) => (
+                <ellipse cx="55" cy="40" rx="35" ry="18" fill="currentColor" />
+                {Array.from({ length: 8 }).map((_, i) => (
                   <line
                     key={i}
                     x1="20"
-                    y1="50"
-                    x2="80"
-                    y2="50"
+                    y1="40"
+                    x2="90"
+                    y2="40"
                     stroke="hsl(var(--background))"
-                    strokeWidth="2"
-                    transform={`rotate(${i * 30} 50 50)`}
+                    strokeWidth="3"
+                    transform={`rotate(${i * 22.5} 55 40)`}
                   />
                 ))}
+                <ellipse cx="55" cy="40" rx="8" ry="18" fill="hsl(var(--background))" />
               </svg>
             )}
           </div>
         );
-      default: // bevel
-        return (
-          <div className={`relative ${animationClass}`}>
-            <svg width={baseSize} height={baseSize} viewBox="0 0 100 100" className={`fill-current text-${project.targetGearColor}`}>
-              <circle cx="50" cy="50" r="25" fill="currentColor" />
-              {Array.from({ length: 10 }).map((_, i) => (
-                <polygon
-                  key={i}
-                  points="50,10 58,30 42,30"
-                  fill="currentColor"
-                  transform={`rotate(${i * 36} 50 50)`}
-                />
-              ))}
-            </svg>
-            {isPlaced && (
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-foreground text-sm font-bold">
-                <ExternalLink size={20} />
-              </div>
-            )}
-          </div>
-        );
+
+      default:
+        return null;
     }
   };
 
   return (
-    <section id="projects" className="min-h-screen py-20 px-8 md:px-16 lg:px-32">
-      <div className="max-w-6xl mx-auto">
+    <section id="projects" className="min-h-screen py-20 px-8 md:px-16 lg:px-32 relative z-20">
+      <div className="max-w-7xl mx-auto">
         <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-16 font-hero text-center">
           Mechanical Engineering Projects
         </h2>
         
-        <p className="text-xl text-muted-foreground text-center mb-16 max-w-3xl mx-auto">
-          Drag the floating gears to their matching project slots to explore each project. 
-          Watch as the gears mesh together and spin in perfect synchronization.
+        <p className="text-xl text-muted-foreground text-center mb-20 max-w-3xl mx-auto">
+          Drag the floating gears to their matching project slots. 
+          Watch as they mesh and spin together in perfect mechanical harmony.
         </p>
         
-        <div className="flex flex-wrap justify-center gap-12 lg:gap-16">
+        {/* Horizontal lineup of project slots */}
+        <div className="flex justify-center items-center gap-8 lg:gap-12 flex-wrap">
           {projectStates.map((project, index) => (
             <div 
               key={index} 
-              className={`gear-slot flex flex-col items-center p-8 rounded-xl transition-all duration-500 min-w-[280px] bg-card/30 backdrop-blur-sm ${
-                dragOverSlot === index ? 'drag-over' : ''
-              } ${project.placed ? 'bg-primary/20 shadow-lg' : 'hover:bg-card/50'}`}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, index)}
-              onClick={(e) => handleSlotClick(e, index)}
+              className="flex flex-col items-center group"
             >
-              <h3 className="text-2xl font-bold text-foreground mb-2 text-center">
+              {/* Project title above gear */}
+              <h3 className="text-lg font-semibold text-foreground mb-4 text-center min-h-[2.5rem] flex items-center max-w-[200px]">
                 {project.title}
               </h3>
               
-              <p className="text-muted-foreground mb-6 text-center text-sm">
+              {/* Invisible gear slot */}
+              <div 
+                className="gear-slot relative flex items-center justify-center p-8 transition-transform duration-200"
+                data-gear-type={project.gearType}
+                data-slot-index={index}
+              >
+                {renderSlotGear(project, index)}
+              </div>
+              
+              {/* Project description below gear */}
+              <p className="text-sm text-muted-foreground text-center mt-4 max-w-[200px] min-h-[2.5rem] flex items-center">
                 {project.description}
               </p>
               
-              <div className="flex items-center justify-center mb-4">
-                {renderTargetGear(project, project.placed)}
-              </div>
-              
-              {project.placed && (
-                <div className="text-center mt-4">
-                  <div className="text-primary text-sm font-semibold animate-pulse">
+              {/* Active state feedback */}
+              {project.isActive && (
+                <div className="mt-3 text-center">
+                  <div className="text-primary text-sm font-medium animate-pulse">
                     Gears meshing... Opening project
                   </div>
                 </div>

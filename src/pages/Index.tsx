@@ -6,9 +6,15 @@ import { ProjectsSection } from '@/components/ProjectsSection';
 
 const Index = () => {
   return (
-    <div className="relative">
+    <div className="relative min-h-screen bg-background">
       {/* Floating gears background */}
-      <FloatingGears />
+      <FloatingGears 
+        onGearSnapped={(gearId, gearType, slotIndex) => {
+          if ((window as any).onGearSnapped) {
+            (window as any).onGearSnapped(gearId, gearType, slotIndex);
+          }
+        }}
+      />
       
       {/* Navigation */}
       <Navigation />
