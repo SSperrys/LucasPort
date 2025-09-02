@@ -16,15 +16,15 @@ const Index = () => {
       {/* Navigation */}
       <Navigation />
       
-      {/* Single floating gears instance that works across all sections */}
-      <FloatingGears onGearSnapped={handleGearSnapped} />
-      
-      {/* Main content */}
-      <main className="relative z-20">
+      {/* Main content with lower z-index so gears can be clicked */}
+      <main className="relative z-10">
         <HeroSection />
         <ExperienceSection />
         <ProjectsSection onGearSnapped={handleGearSnapped} />
       </main>
+      
+      {/* Floating gears with highest z-index for interaction */}
+      <FloatingGears onGearSnapped={handleGearSnapped} />
     </div>
   );
 };
