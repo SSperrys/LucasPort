@@ -13,14 +13,14 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen bg-background">
-      {/* Single floating gears instance that works across all sections */}
-      <FloatingGears onGearSnapped={handleGearSnapped} />
-      
       {/* Navigation */}
       <Navigation />
       
+      {/* Single floating gears instance that works across all sections */}
+      <FloatingGears onGearSnapped={handleGearSnapped} />
+      
       {/* Main content */}
-      <main className="relative z-10">
+      <main className="relative z-20">
         <HeroSection />
         <ExperienceSection />
         <ProjectsSection onGearSnapped={handleGearSnapped} />

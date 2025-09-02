@@ -274,16 +274,16 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
   }, [draggedGear, gears]);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 pointer-events-none z-10">
+    <div ref={containerRef} className="fixed inset-0 z-10 pointer-events-none">
       {gears
         .filter((g) => !g.isSnapped)
         .map((gear) => (
           <div
             key={gear.id}
-            className={`absolute pointer-events-auto select-none ${
+            className={`absolute select-none pointer-events-auto ${
               gear.isDragging 
-                ? "z-[100] scale-110 cursor-grabbing" 
-                : "z-20 hover:scale-105 cursor-grab hover:cursor-grab"
+                ? "z-[1000] scale-110 cursor-grabbing" 
+                : "z-50 hover:scale-105 cursor-grab hover:cursor-grab"
             }`}
             style={{
               left: `${gear.x}%`,
@@ -293,9 +293,20 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
               transform: `translate(-50%, -50%) rotate(${gear.rotation}deg)`,
               filter: gear.isDragging ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
               transition: gear.isDragging ? 'none' : 'all 0.2s ease-out',
+              pointerEvents: 'auto',
             }}
             data-gear-type={gear.type}
             onMouseDown={(e) => handleMouseDown(e, gear.id)}
+            onMouseEnter={() => {
+              if (!gear.isDragging) {
+                document.body.style.cursor = 'grab';
+              }
+            }}
+            onMouseLeave={() => {
+              if (!gear.isDragging) {
+                document.body.style.cursor = '';
+              }
+            }}
           >
             {renderGear(gear)}
           </div>
