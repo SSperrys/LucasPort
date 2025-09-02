@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { FloatingGears } from './FloatingGears';
 
 // Project interface
 interface Project {
@@ -157,7 +156,11 @@ const renderSlotGear = (project: Project, index: number) => {
   );
 };
 
-export const ProjectsSection = () => {
+interface ProjectsSectionProps {
+  onGearSnapped?: (gearId: number, gearType: string, slotIndex: number) => void;
+}
+
+export const ProjectsSection = ({ onGearSnapped }: ProjectsSectionProps) => {
   const [projects, setProjects] = useState(initialProjects);
 
   const handleGearSnapped = (gearId: number, gearType: string, slotIndex: number) => {
@@ -168,6 +171,9 @@ export const ProjectsSection = () => {
           : p
       )
     );
+
+    // Call parent handler
+    onGearSnapped?.(gearId, gearType, slotIndex);
 
     // Open link after animation
     setTimeout(() => {

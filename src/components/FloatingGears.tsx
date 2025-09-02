@@ -167,13 +167,25 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
   // Drag start
   const handleMouseDown = (e: React.MouseEvent, gearId: number) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     const gear = gears.find((g) => g.id === gearId);
     if (!gear || gear.isSnapped) return;
     
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    // Get the gear element's position relative to viewport
+    const gearElement = e.currentTarget as HTMLElement;
+    const rect = gearElement.getBoundingClientRect();
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    
+    if (!containerRect) return;
+    
+    // Calculate precise offset from mouse to gear center
+    const gearCenterX = rect.left + rect.width / 2;
+    const gearCenterY = rect.top + rect.height / 2;
+    
     dragOffset.current = { 
-      x: e.clientX - rect.left, 
-      y: e.clientY - rect.top 
+      x: e.clientX - gearCenterX, 
+      y: e.clientY - gearCenterY 
     };
     
     setDraggedGear(gearId);
@@ -181,17 +193,29 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
       prev.map((g) => (g.id === gearId ? { ...g, isDragging: true } : g))
     );
     document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
   };
 
-  // Drag move
+  // Drag move - much smoother tracking
   const handleMouseMove = (e: MouseEvent) => {
     if (draggedGear === null || !containerRef.current) return;
+    
     const rect = containerRef.current.getBoundingClientRect();
-    const newX = ((e.clientX - dragOffset.current.x) / rect.width) * 100;
-    const newY = ((e.clientY - dragOffset.current.y) / rect.height) * 100;
+    
+    // Calculate new position with smooth tracking
+    const mouseX = e.clientX - dragOffset.current.x;
+    const mouseY = e.clientY - dragOffset.current.y;
+    
+    const newX = ((mouseX - rect.left) / rect.width) * 100;
+    const newY = ((mouseY - rect.top) / rect.height) * 100;
+    
+    // Constrain to viewport bounds
+    const constrainedX = Math.max(2, Math.min(98, newX));
+    const constrainedY = Math.max(2, Math.min(98, newY));
+    
     setGears((prev) =>
       prev.map((g) =>
-        g.id === draggedGear ? { ...g, x: newX, y: newY } : g
+        g.id === draggedGear ? { ...g, x: constrainedX, y: constrainedY } : g
       )
     );
   };
@@ -199,7 +223,9 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
   // Drag end (snap check)
   const handleMouseUp = (e: MouseEvent) => {
     if (draggedGear === null) return;
+    
     document.body.style.cursor = "";
+    document.body.style.userSelect = "";
 
     const gear = gears.find((g) => g.id === draggedGear);
     if (!gear) return;
@@ -213,8 +239,8 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
       const cy = rect.top + rect.height / 2;
       const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
 
-      if (dist < 80 && slot.getAttribute("data-gear-type") === gear.type) {
-        // ✅ Correct slot
+      if (dist < 100 && slot.getAttribute("data-gear-type") === gear.type) {
+        // ✅ Correct slot - larger snap distance for easier targeting
         onGearSnapped?.(gear.id, gear.type, index);
         setGears((prev) =>
           prev.map((g) =>
@@ -248,14 +274,16 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
   }, [draggedGear, gears]);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 pointer-events-none z-0">
+    <div ref={containerRef} className="fixed inset-0 pointer-events-none z-10">
       {gears
         .filter((g) => !g.isSnapped)
         .map((gear) => (
           <div
             key={gear.id}
-            className={`absolute pointer-events-auto transition-all duration-300 ease-out cursor-grab hover:cursor-grab active:cursor-grabbing ${
-              gear.isDragging ? "z-50 scale-110" : "hover:scale-105"
+            className={`absolute pointer-events-auto select-none ${
+              gear.isDragging 
+                ? "z-[100] scale-110 cursor-grabbing" 
+                : "z-20 hover:scale-105 cursor-grab hover:cursor-grab"
             }`}
             style={{
               left: `${gear.x}%`,
@@ -263,7 +291,8 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
               width: gear.size,
               height: gear.size,
               transform: `translate(-50%, -50%) rotate(${gear.rotation}deg)`,
-              filter: gear.isDragging ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' : 'none',
+              filter: gear.isDragging ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+              transition: gear.isDragging ? 'none' : 'all 0.2s ease-out',
             }}
             data-gear-type={gear.type}
             onMouseDown={(e) => handleMouseDown(e, gear.id)}
