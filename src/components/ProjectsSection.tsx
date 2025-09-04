@@ -13,9 +13,9 @@ interface Project {
 // Initial projects data
 const initialProjects: Project[] = [
   {
-    title: "Robotic Arm Controller",
+    title: "Prosthetic Hand",
     gearType: "spur",
-    link: "https://github.com/example/robotic-arm",
+    link: "https://csuma-my.sharepoint.com/:p:/g/personal/lcho51_csum_edu/EUGuctz_7m5CszKytxylpDEBxHk3zWNa6jH9DSMm_ozIyQ?e=HxeXPU",
     isActive: false,
     hasPlacedGear: false,
     slotColor: "hsl(158, 64%, 35%)" // slightly lighter emerald for slot
