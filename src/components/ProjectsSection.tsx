@@ -177,7 +177,7 @@ export const ProjectsSection = ({ onGearSnapped }: ProjectsSectionProps) => {
 
     // Open link after animation
     setTimeout(() => {
-      const project = initialProjects[slotIndex];
+      const project = projects[slotIndex];
       if (project?.link) {
         window.open(project.link, "_blank");
       }

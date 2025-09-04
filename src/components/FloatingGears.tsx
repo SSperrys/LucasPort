@@ -20,6 +20,21 @@ interface FloatingGearsProps {
   onGearSnapped?: (gearId: number, gearType: string, slotIndex: number) => void;
 }
 
+// Function to create a new gear
+const createGear = (id: number, type: string, color: string): Gear => ({
+  id,
+  type,
+  color,
+  x: Math.random() * 85 + 7.5,
+  y: Math.random() * 85 + 7.5,
+  size: Math.random() * 25 + 40,
+  rotation: Math.random() * 360,
+  animationDelay: Math.random() * 10,
+  isDragging: false,
+  isSnapped: false,
+  dragOffset: { x: 0, y: 0 },
+});
+
 // Gear configurations
 const gearConfigs = [
   { type: 'spur', color: 'hsl(158, 64%, 25%)', count: 3 }, // dark emerald green
@@ -133,23 +148,26 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
     let id = 0;
     gearConfigs.forEach((cfg) => {
       for (let i = 0; i < cfg.count; i++) {
-        newGears.push({
-          id: id++,
-          type: cfg.type,
-          color: cfg.color,
-          x: Math.random() * 85 + 7.5,
-          y: Math.random() * 85 + 7.5,
-          size: Math.random() * 25 + 40,
-          rotation: Math.random() * 360,
-          animationDelay: Math.random() * 10,
-          isDragging: false,
-          isSnapped: false,
-          dragOffset: { x: 0, y: 0 },
-        });
+        newGears.push(createGear(id++, cfg.type, cfg.color));
       }
     });
     setGears(newGears);
   }, []);
+
+  // Function to respawn a gear after it's been snapped
+  const respawnGear = (snappedGearId: number) => {
+    setTimeout(() => {
+      setGears((prev) => {
+        const snappedGear = prev.find(g => g.id === snappedGearId);
+        if (!snappedGear) return prev;
+        
+        // Create a new gear of the same type
+        const newGear = createGear(snappedGearId, snappedGear.type, snappedGear.color);
+        
+        return prev.map(g => g.id === snappedGearId ? newGear : g);
+      });
+    }, 2000); // Respawn after 2 seconds
+  };
 
   // Continuous rotation animation
   useEffect(() => {
@@ -247,6 +265,8 @@ export const FloatingGears = ({ onGearSnapped }: FloatingGearsProps) => {
             g.id === gear.id ? { ...g, isSnapped: true, isDragging: false } : g
           )
         );
+        // Schedule gear respawn
+        respawnGear(gear.id);
         snapped = true;
       }
     });
