@@ -14,7 +14,7 @@ if (typeof globalThis.crypto === "undefined") {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: './',  // relative base works for GitHub Pages
+  base: 'LucasPort',  // relative base works for GitHub Pages
   server: {
     host: "::",
     port: 8080,
